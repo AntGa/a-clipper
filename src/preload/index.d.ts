@@ -7,6 +7,8 @@ declare global {
       openFolder: () => Promise<string[]>
       openFiles: () => Promise<string[]>
       getThumbnail: (filePath: string) => Promise<string>
+      getDuration: (filePath: string) => Promise<number>
+      getVideoPort: () => Promise<number>
     }
   }
 }

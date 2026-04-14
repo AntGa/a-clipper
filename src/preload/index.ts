@@ -5,6 +5,8 @@ const api = {
   openFolder: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFolder'),
   openFiles: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFiles'),
   getThumbnail: (filePath: string): Promise<string> => ipcRenderer.invoke('ffmpeg:thumbnail', filePath),
+  getDuration: (filePath: string): Promise<number> => ipcRenderer.invoke('ffmpeg:duration', filePath),
+  getVideoPort: (): Promise<number> => ipcRenderer.invoke('video:port'),
 }
 
 if (process.contextIsolated) {

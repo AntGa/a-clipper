@@ -1,8 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, protocol } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, protocol, net } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import './handlers/ffmpeg'
+import { startVideoServer } from './videoServer'
+
+let videoServerPort: number | null = null
 
 function createWindow(): void {
   // Create the browser window.
@@ -41,15 +44,16 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'localfile', privileges: { secure: true, supportFetchAPI: true } }
+  { scheme: 'localfile', privileges: { secure: true, supportFetchAPI: true, stream: true } }
 ])
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  videoServerPort = await startVideoServer()
+  ipcMain.handle('video:port', () => videoServerPort)
+  // Proxy localfile:// → file:// so range requests (video seeking) work correctly
   protocol.handle('localfile', (request) => {
-    const filePath = decodeURIComponent(request.url.replace('localfile:///', ''))
-    return new Response(require('fs').readFileSync(filePath), {
-      headers: { 'Content-Type': 'image/jpeg' }
-    })
+    const filePath = decodeURIComponent(request.url.slice('localfile:///'.length))
+    return net.fetch(`file:///${filePath}`, { headers: request.headers })
   })
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
@@ -61,7 +65,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
   ipcMain.handle('dialog:openFolder', async (event) => {

@@ -7,9 +7,10 @@ export interface Clip {
   title: string        // editable, defaults to filename without extension
 
   // Edits
-  trimStart: number    // seconds, default 0
-  trimEnd: number | null  // null = full duration (unknown until inspected)
-  muted: boolean
+  duration: number | null  // null until ffprobe reads it
+  trimStart: number        // seconds, default 0
+  trimEnd: number | null   // null until duration known, then defaults to duration
+  volume: number           // 0.0 = muted, 1.0 = original, 2.0 = double
 
   // Workflow state
   status: 'pending' | 'ready' | 'processing' | 'done' | 'error'

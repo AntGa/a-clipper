@@ -11,9 +11,10 @@ function createClip(path: string): Clip {
     id: crypto.randomUUID(),
     path,
     title: pathToTitle(path),
+    duration: null,
     trimStart: 0,
     trimEnd: null,
-    muted: false,
+    volume: 1.0,
     status: 'pending',
   }
 }

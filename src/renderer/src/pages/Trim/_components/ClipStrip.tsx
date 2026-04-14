@@ -1,4 +1,5 @@
 import { Clip } from '@renderer/types/clip'
+import { useThumbnail } from '@renderer/hooks/useThumbnail'
 
 interface ClipStripProps {
   clips: Clip[]
@@ -15,6 +16,8 @@ function StripCard({
   selected: boolean
   onSelect: () => void
 }): React.JSX.Element {
+  const thumb = useThumbnail(clip.path)
+
   return (
     <button
       onClick={onSelect}
@@ -22,8 +25,16 @@ function StripCard({
         selected ? 'border-blue-500' : 'border-transparent hover:border-neutral-600'
       }`}
     >
-      <div className="w-full aspect-video bg-neutral-700 flex items-center justify-center text-xl">
-        🎬
+      <div className="w-full aspect-video bg-neutral-700 flex items-center justify-center text-xl relative">
+        {thumb.status === 'done' && (
+          <img src={thumb.url} alt={clip.title} className="w-full h-full object-cover" />
+        )}
+        {thumb.status === 'loading' && (
+          <span className="animate-pulse">🎬</span>
+        )}
+        {thumb.status === 'error' && (
+          <span className="text-neutral-600">🎥</span>
+        )}
       </div>
       <div className="px-2 py-1.5 bg-neutral-800">
         <p className="text-xs text-neutral-300 truncate">{clip.title}</p>

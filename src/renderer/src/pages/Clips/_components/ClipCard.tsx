@@ -1,26 +1,10 @@
-import { useEffect, useState } from 'react'
 import { Clip } from '@renderer/types/clip'
 import { useClipsStore } from '@renderer/store/clips'
+import { useThumbnail } from '@renderer/hooks/useThumbnail'
 
 interface ClipCardProps {
   clip: Clip
   onRemove: () => void
-}
-
-type ThumbnailState = { status: 'loading' } | { status: 'done'; url: string } | { status: 'error' }
-
-function useThumbnail(filePath: string): ThumbnailState {
-  const [state, setState] = useState<ThumbnailState>({ status: 'loading' })
-
-  useEffect(() => {
-    setState({ status: 'loading' })
-    window.api
-      .getThumbnail(filePath)
-      .then((url) => setState({ status: 'done', url }))
-      .catch(() => setState({ status: 'error' }))
-  }, [filePath])
-
-  return state
 }
 
 const statusStyles: Record<Clip['status'], string> = {

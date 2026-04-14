@@ -31,10 +31,12 @@ export default function Clips(): React.JSX.Element {
       <DropZone onFiles={addClips} />
 
       {clips.length > 0 && (
-        <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 overflow-y-auto">
-          {clips.map((clip) => (
-            <ClipCard key={clip.id} clip={clip} onRemove={() => removeClip(clip.id)} />
-          ))}
+        <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            {clips.map((clip) => (
+              <ClipCard key={clip.id} clip={clip} onRemove={() => removeClip(clip.id)} />
+            ))}
+          </div>
         </div>
       )}
     </div>

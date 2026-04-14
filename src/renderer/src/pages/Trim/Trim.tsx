@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useClipsStore } from '@renderer/store/clips'
 import { Clip } from '@renderer/types/clip'
 import Timeline from './_components/Timeline'
 import ClipInfo from './_components/ClipInfo'
 import ClipStrip from './_components/ClipStrip'
 import { useVideoUrl } from '@renderer/hooks/useVideoUrl'
+import { useKeybinds } from '@renderer/hooks/useKeybinds'
 
 export default function Trim(): React.JSX.Element {
   const { clips, updateClip } = useClipsStore()
@@ -59,39 +60,45 @@ export default function Trim(): React.JSX.Element {
     updateClip(clip.id, { trimStart: start, trimEnd: end })
   }
 
-  const handleSetIn = () => {
-    if (!clip || !videoRef.current) return
-    const t = videoRef.current.currentTime
-    updateClip(clip.id, { trimStart: Math.min(t, (clip.trimEnd ?? clip.duration ?? t) - 0.5) })
-  }
+  const skip = useCallback((seconds: number) => {
+    if (!videoRef.current) return
+    videoRef.current.currentTime = Math.max(0, Math.min(videoRef.current.currentTime + seconds, clip?.duration ?? 0))
+  }, [clip?.duration])
 
-  const handleSetOut = () => {
-    if (!clip || !videoRef.current) return
-    const t = videoRef.current.currentTime
-    updateClip(clip.id, { trimEnd: Math.max(t, clip.trimStart + 0.5) })
-  }
-
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const video = videoRef.current
     if (!video) return
     if (isPlaying) video.pause()
     else video.play()
-  }
+  }, [isPlaying])
 
-  const skip = (seconds: number) => {
-    if (!videoRef.current) return
-    videoRef.current.currentTime = Math.max(0, Math.min(videoRef.current.currentTime + seconds, clip?.duration ?? 0))
-  }
+  const handleSetIn = useCallback(() => {
+    if (!clip || !videoRef.current) return
+    const t = videoRef.current.currentTime
+    updateClip(clip.id, { trimStart: Math.min(t, (clip.trimEnd ?? clip.duration ?? t) - 0.5) })
+  }, [clip])
+
+  const handleSetOut = useCallback(() => {
+    if (!clip || !videoRef.current) return
+    const t = videoRef.current.currentTime
+    updateClip(clip.id, { trimEnd: Math.max(t, clip.trimStart + 0.5) })
+  }, [clip])
+
+  useKeybinds({
+    playPause: togglePlay,
+    setIn: handleSetIn,
+    setOut: handleSetOut,
+    skipBack: useCallback(() => skip(-5), [skip]),
+    skipForward: useCallback(() => skip(5), [skip]),
+  })
 
   return (
     <div className="h-full flex flex-col">
-      {/* Main editor area */}
       <div className="flex flex-1 min-h-0">
         {/* Left: video + timeline + controls */}
         <div className="flex-1 flex flex-col gap-4 p-5 min-w-0">
           {clip ? (
             <>
-              {/* Video */}
               <div className="flex-1 bg-black rounded-xl overflow-hidden flex items-center justify-center min-h-0">
                 <video
                   ref={videoRef}
@@ -101,7 +108,6 @@ export default function Trim(): React.JSX.Element {
                 />
               </div>
 
-              {/* Timeline */}
               {clip.duration != null && clip.trimEnd != null && (
                 <Timeline
                   duration={clip.duration}
@@ -113,9 +119,7 @@ export default function Trim(): React.JSX.Element {
                 />
               )}
 
-              {/* Controls */}
               <div className="flex items-center gap-4 px-4">
-                {/* Playback */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => skip(-5)}
@@ -139,7 +143,6 @@ export default function Trim(): React.JSX.Element {
 
                 <div className="w-px h-6 bg-neutral-700" />
 
-                {/* In/Out */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleSetIn}
@@ -157,12 +160,10 @@ export default function Trim(): React.JSX.Element {
 
                 <div className="w-px h-6 bg-neutral-700" />
 
-                {/* Volume */}
                 <div className="flex items-center gap-2 flex-1 max-w-48">
                   <button
                     onClick={() => updateClip(clip.id, { volume: clip.volume === 0 ? 1 : 0 })}
                     className="text-neutral-400 hover:text-white transition-colors text-lg"
-                    title={clip.volume === 0 ? 'Unmute' : 'Mute'}
                   >
                     {clip.volume === 0 ? '🔇' : clip.volume < 0.5 ? '🔉' : '🔊'}
                   </button>
@@ -188,7 +189,6 @@ export default function Trim(): React.JSX.Element {
           )}
         </div>
 
-        {/* Right: clip info */}
         <div className="w-64 border-l border-neutral-700 shrink-0">
           {clip ? (
             <ClipInfo clip={clip} />
@@ -198,7 +198,6 @@ export default function Trim(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Bottom: clip strip */}
       <ClipStrip clips={clips} selectedId={selectedId} onSelect={handleSelect} />
     </div>
   )

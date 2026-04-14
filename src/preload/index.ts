@@ -4,6 +4,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   openFolder: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFolder'),
   openFiles: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFiles'),
+  getThumbnail: (filePath: string): Promise<string> => ipcRenderer.invoke('ffmpeg:thumbnail', filePath),
 }
 
 if (process.contextIsolated) {

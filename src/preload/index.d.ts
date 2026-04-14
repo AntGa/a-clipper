@@ -6,6 +6,7 @@ declare global {
     api: {
       openFolder: () => Promise<string[]>
       openFiles: () => Promise<string[]>
+      getThumbnail: (filePath: string) => Promise<string>
     }
   }
 }

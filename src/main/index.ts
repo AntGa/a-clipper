@@ -1,7 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, protocol } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import './handlers/ffmpeg'
 
 function createWindow(): void {
   // Create the browser window.
@@ -39,7 +40,17 @@ function createWindow(): void {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'localfile', privileges: { secure: true, supportFetchAPI: true } }
+])
+
 app.whenReady().then(() => {
+  protocol.handle('localfile', (request) => {
+    const filePath = decodeURIComponent(request.url.replace('localfile:///', ''))
+    return new Response(require('fs').readFileSync(filePath), {
+      headers: { 'Content-Type': 'image/jpeg' }
+    })
+  })
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 

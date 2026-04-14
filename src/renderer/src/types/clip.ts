@@ -12,6 +12,9 @@ export interface Clip {
   trimEnd: number | null   // null until duration known, then defaults to duration
   volume: number           // 0.0 = muted, 1.0 = original, 2.0 = double
 
+  // Output
+  outputFolder: string | null  // null = use global output folder from settings
+
   // Workflow state
   status: 'pending' | 'ready' | 'processing' | 'done' | 'error'
   errorMessage?: string

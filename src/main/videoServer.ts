@@ -34,14 +34,16 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
   const mimeType = MIME[extname(filePath).toLowerCase()] ?? 'video/mp4'
   const rangeHeader = req.headers['range']
 
+  const corsHeaders = { 'Access-Control-Allow-Origin': '*' }
+
   if (rangeHeader) {
-    // Parse "bytes=start-end"
     const [startStr, endStr] = rangeHeader.replace('bytes=', '').split('-')
     const start = parseInt(startStr, 10)
     const end = endStr ? parseInt(endStr, 10) : fileSize - 1
     const chunkSize = end - start + 1
 
     res.writeHead(206, {
+      ...corsHeaders,
       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
@@ -50,6 +52,7 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
     createReadStream(filePath, { start, end }).pipe(res)
   } else {
     res.writeHead(200, {
+      ...corsHeaders,
       'Content-Length': fileSize,
       'Content-Type': mimeType,
       'Accept-Ranges': 'bytes',

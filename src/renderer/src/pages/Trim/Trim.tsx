@@ -122,6 +122,7 @@ export default function Trim(): React.JSX.Element {
                 <video
                   ref={videoRef}
                   src={videoUrl ?? undefined}
+                  crossOrigin="anonymous"
                   className="max-h-full max-w-full"
                   onEnded={() => setIsPlaying(false)}
                 />

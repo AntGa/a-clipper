@@ -15,6 +15,7 @@ function createClip(path: string): Clip {
     trimStart: 0,
     trimEnd: null,
     volume: 1.0,
+    outputFolder: null,
     status: 'pending',
   }
 }

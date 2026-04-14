@@ -83,6 +83,15 @@ app.whenReady().then(async () => {
     return files
   })
 
+  ipcMain.handle('dialog:selectFolder', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)!
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory']
+    })
+    if (result.canceled) return null
+    return result.filePaths[0]
+  })
+
   ipcMain.handle('dialog:openFiles', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)!
     const result = await dialog.showOpenDialog(win, {

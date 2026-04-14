@@ -1,5 +1,6 @@
 import { Clip } from '@renderer/types/clip'
 import { useClipsStore } from '@renderer/store/clips'
+import { useSettingsStore } from '@renderer/store/settings'
 
 interface ClipInfoProps {
   clip: Clip
@@ -11,16 +12,36 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+function shortPath(folder: string): string {
+  return folder.split(/[\\/]/).slice(-2).join('/')
+}
+
 export default function ClipInfo({ clip }: ClipInfoProps): React.JSX.Element {
   const { updateClip, markReady, markPending } = useClipsStore()
+  const { outputFolder: globalFolder, setOutputFolder } = useSettingsStore()
 
   const toggleReady = () => {
     if (clip.status === 'ready') markPending(clip.id)
     else markReady(clip.id)
   }
 
+  const pickGlobalFolder = async () => {
+    const folder = await window.api.selectFolder()
+    if (folder) setOutputFolder(folder)
+  }
+
+  const pickClipFolder = async () => {
+    const folder = await window.api.selectFolder()
+    if (folder) updateClip(clip.id, { outputFolder: folder })
+  }
+
+  const clearClipFolder = () => updateClip(clip.id, { outputFolder: null })
+
+  const effectiveFolder = clip.outputFolder ?? globalFolder
+
   return (
-    <div className="flex flex-col gap-6 p-5 h-full">
+    <div className="flex flex-col gap-6 p-5 h-full overflow-y-auto scrollbar-hide">
+      {/* Title */}
       <div>
         <p className="text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-2">Title</p>
         <input
@@ -31,6 +52,7 @@ export default function ClipInfo({ clip }: ClipInfoProps): React.JSX.Element {
         />
       </div>
 
+      {/* Info */}
       <div>
         <p className="text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-2">Info</p>
         <div className="flex flex-col gap-1.5 text-sm">
@@ -61,6 +83,68 @@ export default function ClipInfo({ clip }: ClipInfoProps): React.JSX.Element {
         </div>
       </div>
 
+      {/* Output folder */}
+      <div>
+        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-2">
+          Output Folder
+        </p>
+
+        {/* Global folder */}
+        <div className="flex flex-col gap-1 mb-3">
+          <p className="text-xs text-neutral-600">Global default</p>
+          <button
+            onClick={pickGlobalFolder}
+            className="w-full text-left px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 transition-colors text-xs"
+          >
+            {globalFolder ? (
+              <span className="text-neutral-300" title={globalFolder}>
+                📁 {shortPath(globalFolder)}
+              </span>
+            ) : (
+              <span className="text-neutral-500">Click to set global folder…</span>
+            )}
+          </button>
+        </div>
+
+        {/* Per-clip override */}
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-neutral-600">
+            This clip{' '}
+            {clip.outputFolder ? (
+              <button onClick={clearClipFolder} className="text-red-500 hover:text-red-400 underline">
+                (clear override)
+              </button>
+            ) : (
+              <span className="text-neutral-600">— using global</span>
+            )}
+          </p>
+          <button
+            onClick={pickClipFolder}
+            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-xs border ${
+              clip.outputFolder
+                ? 'bg-blue-600/20 border-blue-500/50 hover:bg-blue-600/30'
+                : 'bg-neutral-700 border-transparent hover:bg-neutral-600'
+            }`}
+          >
+            {clip.outputFolder ? (
+              <span className="text-blue-300" title={clip.outputFolder}>
+                📁 {shortPath(clip.outputFolder)}
+              </span>
+            ) : (
+              <span className="text-neutral-500">Override for this clip…</span>
+            )}
+          </button>
+        </div>
+
+        {/* Effective output */}
+        {effectiveFolder && (
+          <p className="text-xs text-neutral-600 mt-2 truncate" title={effectiveFolder}>
+            Will export to: <span className="text-neutral-500">{shortPath(effectiveFolder)}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Mark ready */}
       <div className="mt-auto">
         <button
           onClick={toggleReady}

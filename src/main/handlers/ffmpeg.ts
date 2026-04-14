@@ -1,11 +1,22 @@
 import { ipcMain, app } from 'electron'
 import ffmpeg from 'fluent-ffmpeg'
 import ffmpegPath from 'ffmpeg-static'
+import ffprobePath from 'ffprobe-static'
 import { join } from 'path'
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs'
 import { createHash } from 'crypto'
 
 ffmpeg.setFfmpegPath(ffmpegPath!)
+ffmpeg.setFfprobePath(ffprobePath.path)
+
+ipcMain.handle('ffmpeg:duration', (_, filePath: string): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) return reject(err)
+      resolve(metadata.format.duration ?? 0)
+    })
+  })
+})
 
 const thumbDir = join(app.getPath('temp'), 'a-clipper-thumbs')
 if (!existsSync(thumbDir)) mkdirSync(thumbDir, { recursive: true })

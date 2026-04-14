@@ -1,21 +1,11 @@
-import { useState } from 'react'
+import { useClipsStore } from '@renderer/store/clips'
 import DropZone from './_components/DropZone'
 import ClipCard from './_components/ClipCard'
 
 export default function Clips(): React.JSX.Element {
-  const [clips, setClips] = useState<string[]>([])
+  const { clips, addClips, removeClip, clearClips } = useClipsStore()
 
-  const handleFiles = (paths: string[]): void => {
-    setClips((prev) => {
-      const existing = new Set(prev)
-      const newPaths = paths.filter((p) => !existing.has(p))
-      return [...prev, ...newPaths]
-    })
-  }
-
-  const handleRemove = (path: string): void => {
-    setClips((prev) => prev.filter((p) => p !== path))
-  }
+  const readyCount = clips.filter((c) => c.status === 'ready').length
 
   return (
     <div className="h-full flex flex-col p-6 gap-6">
@@ -23,12 +13,14 @@ export default function Clips(): React.JSX.Element {
         <div>
           <h1 className="text-xl font-semibold text-white">Clips</h1>
           <p className="text-sm text-neutral-500 mt-0.5">
-            {clips.length > 0 ? `${clips.length} clip${clips.length !== 1 ? 's' : ''} loaded` : 'No clips loaded'}
+            {clips.length > 0
+              ? `${clips.length} clip${clips.length !== 1 ? 's' : ''} — ${readyCount} ready`
+              : 'No clips loaded'}
           </p>
         </div>
         {clips.length > 0 && (
           <button
-            onClick={() => setClips([])}
+            onClick={clearClips}
             className="text-sm text-neutral-500 hover:text-red-400 transition-colors"
           >
             Clear all
@@ -36,12 +28,12 @@ export default function Clips(): React.JSX.Element {
         )}
       </div>
 
-      <DropZone onFiles={handleFiles} />
+      <DropZone onFiles={addClips} />
 
       {clips.length > 0 && (
         <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 overflow-y-auto">
-          {clips.map((path) => (
-            <ClipCard key={path} path={path} onRemove={handleRemove} />
+          {clips.map((clip) => (
+            <ClipCard key={clip.id} clip={clip} onRemove={() => removeClip(clip.id)} />
           ))}
         </div>
       )}

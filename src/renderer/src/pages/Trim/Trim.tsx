@@ -13,9 +13,28 @@ export default function Trim(): React.JSX.Element {
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const gainRef = useRef<GainNode | null>(null)
 
   const clip = clips.find((c) => c.id === selectedId) ?? null
   const videoUrl = useVideoUrl(clip?.path ?? null)
+
+  // Set up Web Audio graph once when video element is ready
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || gainRef.current) return
+    const ctx = new AudioContext()
+    const source = ctx.createMediaElementSource(video)
+    const gain = ctx.createGain()
+    source.connect(gain)
+    gain.connect(ctx.destination)
+    gainRef.current = gain
+  }, [])
+
+  // Sync volume to gain node
+  useEffect(() => {
+    if (!gainRef.current || !clip) return
+    gainRef.current.gain.value = clip.volume
+  }, [clip?.volume])
 
   // Load duration when clip changes
   useEffect(() => {
